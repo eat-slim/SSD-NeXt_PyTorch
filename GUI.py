@@ -1,6 +1,7 @@
 import json
 import sys
 import os
+import time
 import qtawesome
 from PyQt5.Qt import *
 from PyQt5 import QtWidgets, QtCore, QtGui
@@ -27,7 +28,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         if not os.path.exists('GUI'):
-            os.mkdir('GUI')
+            os.makedirs('GUI')
         if os.path.exists('GUI\\Label\\detection.png'):
             self.setWindowIcon(QIcon('GUI\\Label\\detection.png'))
         self.InitUI()
@@ -48,8 +49,8 @@ class MainWindow(QMainWindow):
         self.rightFrame = QtWidgets.QFrame()  # 创建右侧部件
         self.rightFrame.setObjectName('right_frame')
 
-        self.mainLayout.addWidget(self.leftWidget, 0, 0, 12, 3)  # 左侧部件在第0行第0列，占8行3列
-        self.mainLayout.addWidget(self.rightFrame, 0, 3, 12, 9)  # 右侧部件在第0行第3列，占8行9列
+        self.mainLayout.addWidget(self.leftWidget, 0, 0, 12, 3)  # 左侧部件在第0行第0列，占12行3列
+        self.mainLayout.addWidget(self.rightFrame, 0, 3, 12, 9)  # 右侧部件在第0行第3列，占12行9列
         self.setCentralWidget(self.mainWidget)  # 设置窗口主部件
 
         self.leftClose = QPushButton(qtawesome.icon('fa.close', color='white'), "")  # 关闭按钮
@@ -241,7 +242,7 @@ class MainWindow(QMainWindow):
 
         elif mode == 2:
             # 视频
-            img_file, img_type = QFileDialog.getOpenFileName(self, "打开视频", "", "*.mp4")
+            img_file, img_type = QFileDialog.getOpenFileName(self, "打开视频", "", "*.mp4;*.avi")
             if img_file != '':
                 self.media_detector.detect_mode = 2
                 self.media_detector.file_name = img_file
@@ -264,7 +265,6 @@ class MainWindow(QMainWindow):
         按钮1槽函数
         :return:
         """
-        print('Button1')
         if self.stack.currentIndex() != 0:
             self.stack.setCurrentIndex(0)
         self.OpenMediaFile(mode=1)
@@ -274,7 +274,6 @@ class MainWindow(QMainWindow):
         按钮2槽函数
         :return:
         """
-        print('Button2')
         if self.stack.currentIndex() != 0:
             self.stack.setCurrentIndex(0)
         self.OpenMediaFile(mode=2)
@@ -284,7 +283,6 @@ class MainWindow(QMainWindow):
         按钮3槽函数
         :return:
         """
-        print('Button3')
         if self.stack.currentIndex() != 0:
             self.stack.setCurrentIndex(0)
         self.OpenMediaFile(mode=3)
@@ -294,25 +292,22 @@ class MainWindow(QMainWindow):
         按钮4槽函数
         :return:
         """
-        print('Button4')
         if self.stack.currentIndex() != 0:
             self.stack.setCurrentIndex(0)
 
     def OnClickButton5(self):
         """
-        按钮6槽函数
+        按钮5槽函数
         :return:
         """
-        print('Button6')
         if self.stack.currentIndex() != 1:
             self.stack.setCurrentIndex(1)
 
     def OnClickButton6(self):
         """
-        按钮7槽函数
+        按钮6槽函数
         :return:
         """
-        print('Button7')
         if self.stack.currentIndex() != 2:
             self.stack.setCurrentIndex(2)
 
@@ -353,15 +348,16 @@ class MediaDetector(QWidget):
         self.show_score = True
         self.colors = [(0, 0, 255), (0, 255, 0), (255, 0, 0), (0, 255, 255), (255, 0, 255), (255, 255, 0)]  # 颜色
         self.model_type = 1
-        self.init_ui()
+        self.InitUI()
 
-    def init_ui(self):
+    def InitUI(self):
         self.detect_button = QPushButton(qtawesome.icon('fa.object-group', color='black'), '检测')
         self.pause_button = QPushButton(qtawesome.icon('fa5.pause-circle', color='black'), '暂停')
         self.stop_button = QPushButton(qtawesome.icon('fa5.stop-circle', color='black'), '终止')  # 终止键
         self.save_button = QPushButton(qtawesome.icon('fa.save', color='black'), '保存')  # 保存键
         self.canvas = QLabel()  # 画布，放置画面
         self.canvas.setScaledContents(True)
+        self.waiting = WaitingWidget()
 
         self.Format()  # 设置文本格式
 
@@ -403,7 +399,9 @@ class MediaDetector(QWidget):
         self.save_button.setEnabled(False)
 
     def Format(self):
-        """控件格式设置"""
+        """
+        控件格式设置
+        """
         sizePolicy = QSizePolicy()  # 设置控件格式为水平自适应或扩展
         sizePolicy.setHorizontalPolicy(QSizePolicy.Expanding)
         sizePolicy.setVerticalPolicy(QSizePolicy.Fixed)
@@ -413,6 +411,9 @@ class MediaDetector(QWidget):
         self.save_button.setSizePolicy(sizePolicy)
 
     def ShowFrame(self, frame):
+        """
+        展示图像
+        """
         frame = Resize(frame, size=(self.height(), self.width()))
         rbg_img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
         qt_img = QtGui.QImage(rbg_img.data, rbg_img.shape[1], rbg_img.shape[0], QtGui.QImage.Format_RGBA8888)
@@ -421,6 +422,12 @@ class MediaDetector(QWidget):
         cv2.waitKey(1)
 
     def DetectThread(self):
+        """
+        检测线程，检测任务主流程
+        """
+        if not os.path.exists(self.file_name):
+            QMessageBox.warning(QWidget(), '警告', '文件路径错误，请重新选择文件', QMessageBox.Yes)
+            return
         self.detect_button.setEnabled(False)
         self.detect_button.setText('检测中...')
         self.detecting = True
@@ -439,7 +446,7 @@ class MediaDetector(QWidget):
             capture = cv2.VideoCapture(self.file_name)
             width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
             height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
-            out = cv2.VideoWriter(self.temp_file, cv2.VideoWriter_fourcc(*"mp4v"), 20.0, (width, height))
+            out = cv2.VideoWriter(self.temp_file, cv2.VideoWriter_fourcc(*'mp4v'), 20.0, (width, height))
             self.stop_button.setEnabled(True)
             self.pause_button.setEnabled(True)
             while True:
@@ -462,6 +469,9 @@ class MediaDetector(QWidget):
         self.detect_button.setText('检测')
 
     def DetectCore(self, frame):
+        """
+        核心检测部分，包含检测目标和绘制结果
+        """
         # 输入图片，进行预测
         height, width = frame.shape[0], frame.shape[1]
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -501,6 +511,9 @@ class MediaDetector(QWidget):
         self.ShowFrame(frame)
 
     def Restore(self):
+        """
+        按钮状态复原
+        """
         self.stop_button.setEnabled(False)
         self.stop = False
         self.pause_button.setEnabled(False)
@@ -509,13 +522,9 @@ class MediaDetector(QWidget):
         self.pause_button.setIcon(qtawesome.icon('fa5.pause-circle', color='black'))
 
     def InitModel(self):
-        # try:
-        #     _thread.start_new_thread(self.PushMsg, ('正在加载模型，请稍后...',))
-        # except:
-        #     print('线程创建失败')
-        # self.PushMsg('正在加载模型，请稍后...')
-        # self.msg = MsgThread()
-        # self.msg.start()
+        """
+        初始化模型和数据预处理
+        """
         if self.model_type == 1:
             self.model = SSD_NeXt(num_classes=20, cfg=SSD_NeXt_cfg).to(device)
             self.model.load_state_dict(torch.load(r'weights/model_SSD-NeXt_VOC.pth'))
@@ -534,6 +543,9 @@ class MediaDetector(QWidget):
         self.transforms_all = LetterBoxResize(size=(self.model.h, self.model.w))
 
     def OnClickDetect(self):
+        """
+        检测键槽函数
+        """
         if self.detecting:
             return
         try:
@@ -553,26 +565,25 @@ class MediaDetector(QWidget):
         else:
             self.pause_button.setText('暂停')
             self.pause_button.setIcon(qtawesome.icon('fa5.pause-circle', color='black'))
-        print('pause')
 
     def OnClickStop(self):
         """
         终止键槽函数
         """
         self.stop = True
-        print('stop')
 
     def OnClickSave(self):
         """
         保存键槽函数
         """
-        print('save')
         if os.path.isfile(self.temp_file):
             # 确保检测后的临时文件存在
-            target_file, _ = QFileDialog.getSaveFileName(self, "选择保存路径", self.file_name, "")
+            target_file, _ = QFileDialog.getSaveFileName(self, '选择保存路径', self.file_name, "")
             if target_file != '':
                 # 使用多线程异步另存为新文件
                 Thread(target=shutil.copy, args=[self.temp_file, target_file]).start()
+        else:
+            QMessageBox.warning(QWidget(), '警告', '保存失败，原始文件已丢失', QMessageBox.Yes)
 
     def AutoSave(self):
         """
@@ -602,6 +613,9 @@ class MediaDetector(QWidget):
         return path
 
     def SetConfig(self, config):
+        """
+        设置参数
+        """
         if isinstance(config, dict):
             if 'model_type' in config:
                 self.model_type = config['model_type']
@@ -623,10 +637,6 @@ class MediaDetector(QWidget):
             if 'auto_save' in config:
                 self.auto_save = config['auto_save']
         self.InitModel()
-
-    def PushMsg(self, msg):
-        self.msg_box = QMessageBox(QMessageBox.Information, '提示', msg)
-        self.msg_box.exec_()
 
 
 class Setting(QWidget):
@@ -854,6 +864,9 @@ class Setting(QWidget):
         ''')
 
     def Format(self):
+        """
+        设置控件格式
+        """
         # 阈值控件
         self.s_iou.setOrientation(Qt.Horizontal)
         self.s_iou.setMinimum(10)
@@ -890,6 +903,9 @@ class Setting(QWidget):
         self.s_box_width.setTickPosition(QSlider.TicksBelow)
 
     def SetValue(self, media_detector):
+        """
+        设置控件显示参数
+        """
         # 模型设置
         if media_detector.model_type == 1:
             self.b_model1.setChecked(True)
@@ -919,6 +935,11 @@ class Setting(QWidget):
         self.WriteConfig(media_detector)
 
     def GetValue(self, media_detector):
+        """
+        获取设定参数并调整系统参数
+        :param media_detector:
+        :return:
+        """
         # 模型设置
         if self.b_model1.isChecked() and media_detector.model_type != 1:
             media_detector.model_type = 1
@@ -960,6 +981,9 @@ class Setting(QWidget):
             self.l_dir.setText(root)
 
     def WriteConfig(self, media_detector):
+        """
+        写入配置参数
+        """
         config = {
             'model_type': media_detector.model_type,
             'IOU_threshold': media_detector.IOU_threshold,
@@ -978,6 +1002,9 @@ class Setting(QWidget):
             json_file.write(json_str)
 
     def ReadConfig(self):
+        """
+        读取配置参数
+        """
         config_path = os.path.join('GUI', 'config.json')
         if os.path.exists(config_path):
             with open(config_path, 'rb') as json_file:
@@ -1029,6 +1056,7 @@ class Help(QWidget):
                     <p align=\"center\">参数设置</p>
                     <p>SSD-NeXt-VOC能够识别20类常见目标</p>
                     <p>SSD-NeXt-KITTI仅能识别机动车和人，但精度更高</p>
+                    <p>提示：更换模型时会重新加载模型，可能耗时稍长</p>
                     <p>IOU阈值指NMS算法去除冗余框的IOU阈值，阈值越低，重叠框去除越严格</p>
                     <p>置信度阈值指保留目标的置信度下限，低于阈值的检测结果将不被展示</p>
                     <p>其余参数可以调整边界框的展示形式、检测结果的保存状态等</p>
@@ -1039,16 +1067,42 @@ class Help(QWidget):
         self.text.setText(html)
 
 
-class MsgThread(QThread):
+class WaitingWidget(QWidget):
+    """等待界面"""
+
     def __init__(self):
         super().__init__()
+        self.setFixedSize(400, 100)
+        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.Tool)
+        self.label = QLabel('正在加载模型，请稍后...')
+        self.label.setAlignment(Qt.AlignCenter)
+        self.label.raise_()
 
-    def run(self):
-        self.msg_box = QMessageBox(QMessageBox.Information, '提示', '加载模型中，请稍等...')
-        self.msg_box.exec_()
+        v_box = QVBoxLayout()
+        v_box.addWidget(self.label)
+
+        self.setStyleSheet('''
+            QWidget{
+                background-color: #D3D3D3;
+                border-color:black;
+                border-style:solid;
+                border-width:2px;
+            }
+            QLabel{
+                color: black;
+                font-size: 22px;
+                font-family: "微软雅黑", Helvetica, Arial, sans-serif;
+            }
+        ''')
+        self.setLayout(v_box)
+
+    def open(self, text):
+        self.label.setText(text)
+        self.show()
 
 
 def Resize(image, size):
+    """Letterbox Resize"""
     # 计算宽和高的缩放比例，选择最小的那个进行等比例缩放，并在另一维度填充至指定size
     h, w = image.shape[0], image.shape[1]
     ratio_h = size[0] / h

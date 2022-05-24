@@ -6,7 +6,7 @@ parser_SSD_NeXt.add_argument('--batch_size', default=23, type=int,
                              help='Batch size for training')
 parser_SSD_NeXt.add_argument('--sample_per_step', default=640, type=int,
                              help='Batch number contained in a step')
-parser_SSD_NeXt.add_argument('--num_epoch', default=20, type=int,
+parser_SSD_NeXt.add_argument('--num_epoch', default=80, type=int,
                              help='Number of epoch for training')
 parser_SSD_NeXt.add_argument('--num_workers', default=14, type=int,
                              help='Number of workers used in dataloader')
@@ -16,19 +16,19 @@ parser_SSD_NeXt.add_argument('--weight_decay', default=5e-4, type=float,
                              help='Weight decay for optimizer')
 parser_SSD_NeXt.add_argument('--momentum', default=0.9, type=float,
                              help='Momentum value for optimizer')
-parser_SSD_NeXt.add_argument('--warm_up', default=0, type=int,
+parser_SSD_NeXt.add_argument('--warm_up', default=5, type=int,
                              help='Number of warm up epochs')
 parser_SSD_NeXt.add_argument('--unfreeze', default=0, type=int,
                              help='Number of freeze epochs')
 parser_SSD_NeXt.add_argument('--save_folder', default='weights', type=str,
                              help='Directory for saving checkpoint models')
-parser_SSD_NeXt.add_argument('--name', default='SSD_384_attention', type=str,
+parser_SSD_NeXt.add_argument('--name', default='SSD_NeXt', type=str,
                              help='Name of the model')
-parser_SSD_NeXt.add_argument('--version', default='AdamW_msc5_ctn', type=str,
+parser_SSD_NeXt.add_argument('--version', default='AdamW', type=str,
                              help='Version of the model')
 parser_SSD_NeXt.add_argument('--eval_frequency', default=1, type=int,
                              help='Eval every few epochs')
-parser_SSD_NeXt.add_argument('--checkpoint', default='SSD_384_attention_VOC_0.0001_0.0005_epoch27.pth', type=str,
+parser_SSD_NeXt.add_argument('--checkpoint', default='', type=str,
                              help='Path to checkpoint file')
 parser_SSD_NeXt.add_argument('--dataset', default='VOC', type=str,
                              help='Dataset for training')
@@ -36,7 +36,7 @@ parser_SSD_NeXt.add_argument('--set_lr', default=0, type=float,
                              help='Set learning rate as you want, not initial lr')
 parser_SSD_NeXt.add_argument('--test_bsz', default=8, type=float,
                              help='Batch size for test')
-parser_SSD_NeXt.add_argument('--mode', default='fps', type=str,
+parser_SSD_NeXt.add_argument('--mode', default='train', type=str,
                              help='train or test')
 
 parser_SSD300 = argparse.ArgumentParser(description='Train SSD300')
@@ -45,7 +45,7 @@ parser_SSD300.add_argument('--batch_size', default=32, type=int,
                            help='Batch size for training')
 parser_SSD300.add_argument('--sample_per_step', default=640, type=int,
                            help='Batch number contained in a step')
-parser_SSD300.add_argument('--num_epoch', default=80, type=int,
+parser_SSD300.add_argument('--num_epoch', default=120, type=int,
                            help='Number of epoch for training')
 parser_SSD300.add_argument('--num_workers', default=14, type=int,
                            help='Number of workers used in dataloader')
@@ -55,7 +55,7 @@ parser_SSD300.add_argument('--weight_decay', default=5e-4, type=float,
                            help='Weight decay for optimizer')
 parser_SSD300.add_argument('--momentum', default=0.9, type=float,
                            help='Momentum value for optimizer')
-parser_SSD300.add_argument('--warm_up', default=4, type=int,
+parser_SSD300.add_argument('--warm_up', default=5, type=int,
                            help='Number of warm up epochs')
 parser_SSD300.add_argument('--unfreeze', default=0, type=int,
                            help='Number of freeze epochs')
@@ -63,11 +63,11 @@ parser_SSD300.add_argument('--save_folder', default='weights', type=str,
                            help='Directory for saving checkpoint models')
 parser_SSD300.add_argument('--name', default='SSD300', type=str,
                            help='Name of the model')
-parser_SSD300.add_argument('--version', default='AdamW_msc5', type=str,
+parser_SSD300.add_argument('--version', default='AdamW', type=str,
                            help='Version of the model')
 parser_SSD300.add_argument('--eval_frequency', default=1, type=int,
                            help='Eval every few epochs')
-parser_SSD300.add_argument('--checkpoint', default='SSD300_VOC_AdamW_msc5_0.0001_0.0005_epoch80.pth', type=str,
+parser_SSD300.add_argument('--checkpoint', default='', type=str,
                            help='Path to checkpoint file')
 parser_SSD300.add_argument('--dataset', default='VOC', type=str,
                            help='Dataset for training')
@@ -75,7 +75,7 @@ parser_SSD300.add_argument('--set_lr', default=0, type=float,
                            help='Set learning rate as you want, not initial lr')
 parser_SSD300.add_argument('--test_bsz', default=8, type=float,
                            help='Batch size for test')
-parser_SSD300.add_argument('--mode', default='fps', type=str,
+parser_SSD300.add_argument('--mode', default='train', type=str,
                            help='train or test')
 
 parameters_group = {

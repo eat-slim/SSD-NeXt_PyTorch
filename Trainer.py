@@ -12,7 +12,9 @@ import requests
 
 
 class Trainer:
-
+    """
+    封装训练与测试过程
+    """
     def __init__(self, args, model, optimizer, criterion, train_scheduler, train_dataset, eval_dataset, device,
                  coco_eval_only=False, wechat_notice=False):
         self.args = args
@@ -66,7 +68,7 @@ class Trainer:
         self.coco = COCO(annFile)
 
     def train(self):
-
+        """训练"""
         if self.start_epoch < self.args.unfreeze:
             for p in self.model.backbone.parameters():
                 p.requires_grad = False
@@ -170,6 +172,7 @@ class Trainer:
         print('\tmean train time =', train_timer.avg(), 'sec')
 
     def eval(self):
+        """验证"""
         detection_tables = []  # 保存每个类别在验证集上的检测结果
         num_gt = [0] * len(self.classes)  # 保存每个类别真实框的总数
         is_exist = [False] * len(self.classes)  # 记录每个类别是否存在
@@ -295,6 +298,7 @@ class Trainer:
 
     @staticmethod
     def ComputeAP(detection_table, num_gt, before_VOC2010=False):
+        """计算AP"""
         if detection_table.shape[0] == 0 or num_gt == 0:
             return 0
         _, indices = torch.sort(detection_table[:, 0], descending=True)  # 根据置信度排序，获得排序索引
@@ -333,6 +337,7 @@ class Trainer:
         return float(AP)
 
     def EvalByCOCO(self):
+        """仅使用COCO的API进行验证"""
         resize = LetterBoxResize(size=(self.model.h, self.model.w))
         result = []  # 保存检测结果
         # 对验证集中所有图片进行检测
@@ -418,6 +423,7 @@ class Trainer:
         return float(mAP), AP_dict
 
     def TestFPS(self):
+        """测试FPS"""
         eval_iter = DataLoader(self.eval_dataset, batch_size=self.args.test_bsz, shuffle=False,
                                num_workers=self.args.num_workers, collate_fn=self.eval_dataset.collate_fn,
                                pin_memory=True)
@@ -437,6 +443,7 @@ class Trainer:
         return infer_time * 1000, fps
 
     def WechatNotice(self, epoch, loss, mAP):
+        """微信提醒训练结果"""
         resp = requests.post(
             "https://xxx/wechat/xxx",  # 替换成你的微信消息通知地址
             json={

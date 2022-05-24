@@ -9,7 +9,7 @@ from Argument import encoding_parameters, match_parameters
 
 def GenerateBox(feature_maps, size, steps, scales, aspect_ratios):
     """
-    生成以每个像素为中心具有不同形状的锚框
+    生成锚框
     tips：原文中设定预设框尺度的最小最大值为0.2和0.9（第6种），其余4种尺度均匀分布在0.2-0.9之间，还需要额外的第7种尺度
     这里尺度设置为，最小0.1，第2种尺度0.2，最大1.05（第7种），其余4种尺度均匀分布在0.2-1.05之间
     尺度设置为可调参数，可以根据数据集中目标尺度的分布特征进行合理修改，例如YOLO的尺度来源于数据集中目标尺度的k-means聚类
@@ -51,9 +51,6 @@ def GenerateBox(feature_maps, size, steps, scales, aspect_ratios):
 def GenerateBoxHW(feature_maps_h, feature_maps_w, scales, aspect_ratios):
     """
     生成以每个像素为中心具有不同形状的锚框
-    tips：原文中设定预设框尺度的最小最大值为0.2和0.9（第6种），其余4种尺度均匀分布在0.2-0.9之间，还需要额外的第7种尺度
-    这里尺度设置为，最小0.1，第2种尺度0.2，最大1.05（第7种），其余4种尺度均匀分布在0.2-1.05之间
-    尺度设置为可调参数，可以根据数据集中目标尺度的分布特征进行合理修改，例如YOLO的尺度来源于数据集中目标尺度的k-means聚类
     :param feature_maps_h: 特征图的高
     :param feature_maps_w: 特征图的高
     :param scales: 预设框的尺度
@@ -478,6 +475,16 @@ def Detection(predictions, IOU_threshold=0.45, conf_threshold=0.01, top_k=200):
 
 
 def display(img, objects, threshold=0.5, classes=None, colors=None, line_width=1, show_score=True):
+    """
+    绘制目标框
+    :param img: 待绘制原图像
+    :param objects: 目标tensor，[N, 6] 6->(xmin, ymin, xmax, ymax, cls, conf)
+    :param threshold: 置信度阈值
+    :param classes: 类别列表，与类别标签对应
+    :param colors: 可选颜色
+    :param line_width: 目标框粗细
+    :param show_score: 是否展示置信度
+    """
     plt.rcParams['figure.dpi'] = 300
     if colors is None:
         colors = ['r', 'y', 'g', 'm', 'c', 'b']  # 颜色

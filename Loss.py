@@ -175,6 +175,10 @@ class MultiBoxLossNonMatch(nn.Module):
         return ret
 
     def ScaleWeighting(self, cfg):
+        """
+        反比例函数加权损失
+        :param cfg: 模型参数字典
+        """
         if cfg is None:
             weighting = torch.ones((1,), dtype=torch.float32)
         else:

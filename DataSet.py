@@ -183,6 +183,12 @@ class VOCDetection(Dataset):
         return len(self.image_ids)
 
     def GetHW(self, index=None, img_id=None):
+        """
+        获取图像宽和高
+        :param index: 图片索引
+        :param img_id: 图像编号
+        :return:
+        """
         if index is not None:
             img_id = self.image_ids[index]
         # 读取xml文件，获取图像尺寸
@@ -192,6 +198,9 @@ class VOCDetection(Dataset):
         return h, w
 
     def collate_with_match(self, batch):
+        """
+        组装样本时匹配标签
+        """
         features, targets = zip(*batch)
 
         # 图片打包成tensor: [batch_size, channels, h, w]
@@ -217,6 +226,9 @@ class VOCDetection(Dataset):
 
     @staticmethod
     def collate_matched(batch):
+        """
+        组装已匹配标签的样本
+        """
         features, targets = zip(*batch)
 
         # 图片打包成tensor: [batch_size, channels, h, w]
@@ -238,6 +250,9 @@ class VOCDetection(Dataset):
 
     @staticmethod
     def collate_fn(batch):
+        """
+        组装未处理样本
+        """
         features, targets = zip(*batch)
 
         # 图片打包成tensor: [batch_size, channels, h, w]
@@ -915,13 +930,6 @@ def CheckPriors(prior_boxes, targets, num_classes, IOU_threshold=0.5):
     return matched, num_targets, max_iou.mean()
 
 
-def WH_IoU(wh1, wh2):
-    wh1 = wh1[:, None]  # [N,1,2]
-    wh2 = wh2[None]  # [1,M,2]
-    inter = np.minimum(wh1, wh2).prod(2)  # [N,M]
-    return inter / (wh1.prod(2) + wh2.prod(2) - inter)  # iou = inter / (area1 + area2 - inter)
-
-
 def k_means(boxes, k, dist=np.median):
     """
     YOLO使用的k-means方法
@@ -930,6 +938,12 @@ def k_means(boxes, k, dist=np.median):
     :param k: 聚类中心数
     :param dist: 更新簇坐标的方法(默认使用中位数，比均值效果略好)
     """
+
+    def WH_IoU(wh1, wh2):
+        wh1 = wh1[:, None]  # [N,1,2]
+        wh2 = wh2[None]  # [1,M,2]
+        inter = np.minimum(wh1, wh2).prod(2)  # [N,M]
+        return inter / (wh1.prod(2) + wh2.prod(2) - inter)  # iou = inter / (area1 + area2 - inter)
     box_number = boxes.shape[0]
     last_nearest = np.zeros((box_number,))
 
@@ -954,6 +968,11 @@ def k_means(boxes, k, dist=np.median):
 
 
 def ClusterForPriors(cfg, num_clusters):
+    """
+    聚类产生预设框
+    :param cfg: 模型配置字典
+    :param num_clusters: 聚类中心数
+    """
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     h, w = cfg['h'], cfg['w']
     if platform.system() == 'Windows':
@@ -995,6 +1014,10 @@ def ClusterForPriors(cfg, num_clusters):
 
 
 def EvalForPriors(cfg):
+    """
+    验证预设框覆盖率
+    :param cfg: 模型配置字典
+    """
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     if platform.system() == 'Windows':
         vocRoot = r'D:\DateSet\VOC'
@@ -1053,37 +1076,38 @@ PRE_DEFINE_CATEGORIES = {'person': 1,
                          'car': 2, 'bus': 3, 'bicycle': 4, 'motorbike': 5, 'aeroplane': 6, 'boat': 7, 'train': 8,
                          'chair': 9, 'sofa': 10, 'diningtable': 11, 'tvmonitor': 12, 'bottle': 13, 'pottedplant': 14,
                          'cat': 15, 'dog': 16, 'cow': 17, 'horse': 18, 'sheep': 19, 'bird': 20}
-
-
 # PRE_DEFINE_CATEGORIES = {'Person': 1, 'Vehicle': 2, 'Bike': 3}
 # PRE_DEFINE_CATEGORIES = {"Pedestrian": 1, "Person_sitting": 1, "Cyclist": 1, "Truck": 2, "Car": 2, "Van": 2, "Tram": 2}
 
 
-def get(root, name):
-    vars = root.findall(name)
-    return vars
+def ConvertXMLToJson(xml_list, xml_dir, json_file):
+    """
+    将VOC数据集的xml标签转换为COCO数据集的json文件
+    :param xml_list: XML文件名列表
+    :param xml_dir: XML标签目录
+    :param json_file: 目标位置
+    """
+    def get(root, name):
+        vars = root.findall(name)
+        return vars
 
+    def get_and_check(root, name, length):
+        vars = root.findall(name)
+        if len(vars) == 0:
+            raise NotImplementedError('Can not find %s in %s.' % (name, root.tag))
+        if length > 0 and len(vars) != length:
+            raise NotImplementedError('The size of %s is supposed to be %d, but is %d.' % (name, length, len(vars)))
+        if length == 1:
+            vars = vars[0]
+        return vars
 
-def get_and_check(root, name, length):
-    vars = root.findall(name)
-    if len(vars) == 0:
-        raise NotImplementedError('Can not find %s in %s.' % (name, root.tag))
-    if length > 0 and len(vars) != length:
-        raise NotImplementedError('The size of %s is supposed to be %d, but is %d.' % (name, length, len(vars)))
-    if length == 1:
-        vars = vars[0]
-    return vars
+    def get_filename_as_int(filename):
+        try:
+            filename = os.path.splitext(filename)[0]
+            return int(filename)
+        except:
+            raise NotImplementedError('Filename %s is supposed to be an integer.' % (filename))
 
-
-def get_filename_as_int(filename):
-    try:
-        filename = os.path.splitext(filename)[0]
-        return int(filename)
-    except:
-        raise NotImplementedError('Filename %s is supposed to be an integer.' % (filename))
-
-
-def convert(xml_list, xml_dir, json_file):
     list_fp = open(xml_list, 'r')
     json_dict = {"images": [], "type": "instances", "annotations": [],
                  "categories": []}
@@ -1146,6 +1170,12 @@ def convert(xml_list, xml_dir, json_file):
 
 
 def RandomSplit(trainval_file, train_file, val_file):
+    """
+    将数据集拆分为训练集和验证集
+    :param trainval_file: 数据集全部标签
+    :param train_file: 训练标签文件位置
+    :param val_file: 验证标签文件位置
+    """
     with open(trainval_file, 'r') as file:
         trainval = file.readlines()
         trainval = [line.strip() for line in trainval]
@@ -1164,7 +1194,15 @@ def RandomSplit(trainval_file, train_file, val_file):
         file.write('\n'.join(val))
 
 
-def generate_xml(name, split_lines, img_size, class_ind, tar_dir):
+def GenerateSingleXml(name, split_lines, img_size, class_idx, tar_dir):
+    """
+    转换单个图片的标签
+    :param name: 文件名
+    :param split_lines: 标签列表
+    :param img_size: 图像分辨率
+    :param class_idx: 类别标签
+    :param tar_dir: 目标文件夹
+    """
     doc = Document()
     # owner
     annotation = doc.createElement('annotation')
@@ -1224,7 +1262,7 @@ def generate_xml(name, split_lines, img_size, class_ind, tar_dir):
 
     for split_line in split_lines:
         line = split_line.strip().split()
-        if line[0] in class_ind:
+        if line[0] in class_idx:
             object_new = doc.createElement("object")
             annotation.appendChild(object_new)
 
@@ -1271,8 +1309,25 @@ def generate_xml(name, split_lines, img_size, class_ind, tar_dir):
             ymax_txt = doc.createTextNode(str(float(line[7])))
             ymax.appendChild(ymax_txt)
 
-    # 将DOM对象doc写入文件
-    with open(tar_dir + name + '.xml', "wb") as f:
-        f.write(doc.toprettyxml(indent='\t', encoding='utf-8'))
+    with open(tar_dir + name + '.xml', "wb") as file:
+        file.write(doc.toprettyxml(indent='\t', encoding='utf-8'))
 
+
+def GenerateXML(class_idx, img_dir, labels_dir, tar_dir):
+    """
+    根据TXT格式的标签创建VOC格式的XML标签，可用于KITTI标签转VOC
+    :param class_idx: 类别标签列表
+    :param img_dir: 图片文件路径
+    :param labels_dir: TXT标签文件路径
+    :param tar_dir: 转换后的xml文件的路径
+    """
+    for parent, dirnames, filenames in os.walk(labels_dir):  # 分别得到根目录，子目录和根目录下文件
+        for file_name in tqdm(filenames):
+            full_path = os.path.join(parent, file_name)  # 获取文件全路径
+            f = open(full_path)
+            split_lines = f.readlines()
+            name = file_name[:-4]  # 后四位是扩展名.txt，只取前面的文件名
+            img_path = os.path.join(img_dir, name + '.png')  # 路径需要自行修改
+            img_size = cv2.imread(img_path).shape
+            GenerateSingleXml(name, split_lines, img_size, class_idx, tar_dir)
 

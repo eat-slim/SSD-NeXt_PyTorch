@@ -541,9 +541,6 @@ if __name__ == "__main__":
                                  transforms_all=transforms_all, dataset='KITTI')
     voc_iter = DataLoader(train_dataset, batch_size=1, collate_fn=train_dataset.collate_fn, shuffle=True)
 
-    # train_dataset.ShowImage('000000',
-    #                         all_transforms=LetterBoxResize(size=(h, w), padding_ratio=0.5))
-    # exit()
     for X, Y in voc_iter:
         print(X.shape, Y['image_ids'])
         image = X[0].permute(1, 2, 0)

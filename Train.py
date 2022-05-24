@@ -102,8 +102,14 @@ def Train():
 
 
 def TestImage(model, image_file):
+    """
+    测试检测图片
+    :param model: 模型
+    :param image_file: 图片文件列表
+    """
     data_transforms = transforms.Compose([
-        transforms.ToTensor()
+        transforms.ToTensor(),
+        transforms.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD)
     ])
     image_transforms = LetterBoxResize(size=(model.h, model.w))
     classes = ['person',
@@ -122,6 +128,9 @@ def TestImage(model, image_file):
 
 
 def CompareModel():
+    """
+    比较SSD-NeXt和SSD300对KITTI验证集图片的检测效果
+    """
     SSD_next = SSD_NeXt(num_classes=2, cfg=SSD_NeXt_cfg).to(device)
     SSD300 = SSD_300(num_classes=2).to(device)
 
@@ -182,7 +191,10 @@ def CompareModel():
         time.sleep(1)
 
 
-def TestOneImage():
+def TestForTrain():
+    """
+    使用少量几张图片训练模型，以验证是否能够正常收敛
+    """
     batch_size = 3
     warm_up = 5
     model = SSD_NeXt(num_classes=20, cfg=SSD_NeXt_cfg).to(device)
