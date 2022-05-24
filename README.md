@@ -22,3 +22,7 @@ Windows10</br>
 然后运行 train.py 即可
 ### GUI
 运行 GUI.py 即可
+## 其他
+预训练权重下载地址：</br>
+链接：https://pan.baidu.com/s/1JzFRfBvKGaWqMGtaSeqYBQ?pwd=itsx </br>
+提取码：itsx</br>
