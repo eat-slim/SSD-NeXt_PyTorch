@@ -15,4 +15,10 @@ Windows10</br>
 + 使用VOC、KITTI数据集进行训练和测试
 + 基于PyQt5实现的目标检测系统GUI，可利用SSD-NeXt预训练权重对图片、视频进行目标检测
 ## 使用方式
-+ 待补充
+### 训练
+运行 train.py 即可
+### 测试
+设置参数：checkpoint=训练权重文件路径，mode='test'</br>
+然后运行 train.py 即可
+### GUI
+运行 GUI.py 即可
